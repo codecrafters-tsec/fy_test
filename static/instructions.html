@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Instructions</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto 20px; }
+        .logo { height: 50px; width: auto; background: white; padding: 5px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        .instructions { margin-bottom: 30px; }
+        .instructions h2 { color: #667eea; margin-bottom: 15px; font-size: 20px; }
+        .instructions ul { margin-left: 20px; line-height: 1.8; color: #555; }
+        .instructions li { margin-bottom: 10px; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; color: #856404; }
+        button { padding: 15px 40px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; display: block; margin: 0 auto; }
+        button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="logos/club logo.png" alt="Club Logo" class="logo">
+        <img src="logos/clg logo (1).png" alt="College Logo" class="logo">
+    </div>
+    <div class="container">
+        <h1>Exam Instructions</h1>
+        
+        <div class="instructions">
+            <h2>Important Guidelines:</h2>
+            <ul>
+                <li>This is a timed MCQ exam. The timer will start as soon as you begin.</li>
+                <li>Questions are randomized for each student.</li>
+                <li>You can only attempt this exam ONCE. No retakes allowed.</li>
+                <li>Select one answer for each question.</li>
+                <li>You can navigate between questions freely.</li>
+                <li>The exam will auto-submit when time expires.</li>
+                <li>Do NOT refresh or close the browser during the exam.</li>
+                <li>Your score will be displayed after submission.</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Warning:</strong> Once you click "Start Exam", the timer begins immediately. Make sure you're ready!
+        </div>
+
+        <button onclick="startExam()">Start Exam</button>
+    </div>
+
+    <script>
+        function startExam() {
+            if (confirm('Are you ready to start the exam? The timer will begin immediately.')) {
+                window.location.href = 'exam.html';
+            }
+        }
+    </script>
+</body>
+</html>

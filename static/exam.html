@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Exam</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header { background: #667eea; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 50px; width: auto; background: white; padding: 5px; border-radius: 5px; }
+        .timer { font-size: 24px; font-weight: bold; }
+        .timer.warning { color: #ff6b6b; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .question { margin-bottom: 30px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px; }
+        .question-text { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 15px; }
+        .options { margin-left: 10px; }
+        .option { margin: 10px 0; }
+        .option label { display: flex; align-items: center; padding: 10px; border-radius: 5px; cursor: pointer; transition: background 0.2s; }
+        .option label:hover { background: #f0f0f0; }
+        .option input { margin-right: 10px; cursor: pointer; }
+        .navigation { display: flex; justify-content: space-between; margin-top: 30px; }
+        button { padding: 12px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .btn-prev { background: #6c757d; color: white; }
+        .btn-next { background: #667eea; color: white; }
+        .btn-submit { background: #28a745; color: white; }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .progress { margin-bottom: 20px; text-align: center; color: #666; font-size: 14px; }
+        body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        input[type="radio"] { -webkit-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="logos/club logo.png" alt="Club Logo" class="logo">
+            <h1>MCQ Exam</h1>
+        </div>
+        <div class="header-right">
+            <div class="timer" id="timer">Loading...</div>
+            <img src="logos/clg logo (1).png" alt="College Logo" class="logo">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="progress" id="progress"></div>
+        <div id="questionContainer"></div>
+        
+        <div class="navigation">
+            <button class="btn-prev" id="prevBtn" onclick="navigate(-1)">Previous</button>
+            <button class="btn-next" id="nextBtn" onclick="navigate(1)">Next</button>
+            <button class="btn-submit" id="submitBtn" onclick="submitExam()" style="display:none;">Submit Exam</button>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuestion = 0;
+        let answers = {};
+        let timeLeft = 0;
+        let timerInterval;
+        let examStarted = false;
+
+        window.addEventListener('beforeunload', (e) => {
+            if (examStarted) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        async function loadExam() {
+            try {
+                const res = await fetch('/api/exam/start', { credentials: 'include' });
+                const data = await res.json();
+
+                if (!data.success) {
+                    alert(data.message);
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                questions = data.questions;
+                timeLeft = data.duration * 60;
+                examStarted = true;
+                
+                startTimer();
+                displayQuestion();
+            } catch (err) {
+                alert('Failed to load exam');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmit();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 60) {
+                timerEl.classList.add('warning');
+            }
+            
+            // Disable buttons when time is up
+            if (timeLeft <= 0) {
+                document.getElementById('prevBtn').disabled = true;
+                document.getElementById('nextBtn').disabled = true;
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) submitBtn.disabled = true;
+            }
+        }
+
+        function displayQuestion() {
+            const q = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+            
+            container.innerHTML = `
+                <div class="question">
+                    <div class="question-text">Q${currentQuestion + 1}. ${q.question}</div>
+                    <div class="options">
+                        ${Object.entries(q.options).map(([key, value]) => `
+                            <div class="option">
+                                <label>
+                                    <input type="radio" name="answer" value="${key}" 
+                                           ${answers[q.id] === key ? 'checked' : ''} 
+                                           onchange="saveAnswer(${q.id}, '${key}')">
+                                    <span>${key}. ${value}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('progress').textContent = 
+                `Question ${currentQuestion + 1} of ${questions.length}`;
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            
+            if (currentQuestion === questions.length - 1) {
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('submitBtn').style.display = 'block';
+            } else {
+                document.getElementById('nextBtn').style.display = 'block';
+                document.getElementById('submitBtn').style.display = 'none';
+            }
+        }
+
+        function saveAnswer(questionId, answer) {
+            answers[questionId] = answer;
+        }
+
+        function navigate(direction) {
+            currentQuestion += direction;
+            if (currentQuestion < 0) currentQuestion = 0;
+            if (currentQuestion >= questions.length) currentQuestion = questions.length - 1;
+            displayQuestion();
+        }
+
+        async function submitExam() {
+            if (!confirm('Are you sure you want to submit? You cannot change answers after submission.')) {
+                return;
+            }
+
+            clearInterval(timerInterval);
+            examStarted = false;
+
+            try {
+                const res = await fetch('/api/exam/submit', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Client-IP': await getClientIP()
+                    },
+                    body: JSON.stringify({ answers }),
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('examResult', JSON.stringify(data));
+                    window.location.href = 'result.html';
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Submission failed');
+            }
+        }
+
+        function autoSubmit() {
+            clearInterval(timerInterval);
+            examStarted = false;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) submitBtn.disabled = true;
+            
+            getClientIP().then(ip => {
+                fetch('/api/exam/submit', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Client-IP': ip
+                    },
+                    body: JSON.stringify({ answers }),
+                    credentials: 'include'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem('examResult', JSON.stringify(data));
+                        alert('Time is up! Your exam has been submitted automatically.');
+                        window.location.href = 'result.html';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(() => alert('Auto-submission failed'));
+            });
+        }
+
+        async function getClientIP() {
+            const stored = sessionStorage.getItem('clientIP');
+            if (stored && stored !== 'unknown' && stored !== 'server-detected') return stored;
+            
+            try {
+                // Try primary service with timeout
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+                
+                const res = await fetch('https://api.ipify.org?format=json', { 
+                    signal: controller.signal 
+                });
+                clearTimeout(timeout);
+                
+                const data = await res.json();
+                if (data.ip) {
+                    sessionStorage.setItem('clientIP', data.ip);
+                    return data.ip;
+                }
+            } catch (err) {
+                console.warn('ipify failed, trying backup...');
+                
+                // Backup service
+                try {
+                    const controller2 = new AbortController();
+                    const timeout2 = setTimeout(() => controller2.abort(), 3000);
+                    
+                    const res2 = await fetch('https://icanhazip.com', { 
+                        signal: controller2.signal 
+                    });
+                    clearTimeout(timeout2);
+                    
+                    const ip = (await res2.text()).trim();
+                    if (ip) {
+                        sessionStorage.setItem('clientIP', ip);
+                        return ip;
+                    }
+                } catch {}
+            }
+            
+            // Fallback to server detection
+            const fallback = 'server-detected';
+            sessionStorage.setItem('clientIP', fallback);
+            return fallback;
+        }
+
+        loadExam();
+    </script>
+    <script>
+        // Anti-cheat protection
+        (function() {
+            function showWarning(msg) {
+                const w = document.createElement('div');
+                w.style.cssText = 'position:fixed;top:20px;right:20px;background:#f85149;color:white;padding:10px 15px;border-radius:5px;z-index:10000;font-size:14px;box-shadow:0 4px 8px rgba(0,0,0,0.3);';
+                w.textContent = msg;
+                document.body.appendChild(w);
+                setTimeout(() => w.remove(), 3000);
+            }
+            
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey && ['c','v','x','a','u','s'].includes(e.key)) || e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && e.key === 'I') || e.key === 'PrintScreen') {
+                    e.preventDefault();
+                    showWarning('This action is disabled during the exam!');
+                    return false;
+                }
+            });
+            
+            document.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                showWarning('Right-click is disabled during the exam!');
+            });
+            
+            document.addEventListener('selectstart', function(e) {
+                if (e.target.type !== 'radio') {
+                    e.preventDefault();
+                    showWarning('Text selection is disabled!');
+                }
+            });
+            
+            document.addEventListener('copy', e => {
+                e.preventDefault();
+                showWarning('Copy is disabled during the exam!');
+            });
+            
+            document.addEventListener('cut', e => {
+                e.preventDefault();
+                showWarning('Cut is disabled during the exam!');
+            });
+            
+            document.addEventListener('paste', e => {
+                e.preventDefault();
+                showWarning('Paste is disabled during the exam!');
+            });
+            
+            let tabSwitchCount = 0;
+            let isPageUnloading = false;
+            
+            fetch('/api/tab-switch-count')
+                .then(r => r.json())
+                .then(d => { if (d.count) tabSwitchCount = d.count; })
+                .catch(() => {});
+            
+            window.addEventListener('beforeunload', () => isPageUnloading = true);
+            
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && !isPageUnloading) {
+                    tabSwitchCount++;
+                    
+                    (async function() {
+                        const ip = await getClientIP();
+                        fetch('/api/tab-switch', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'X-Client-IP': ip
+                            },
+                            body: JSON.stringify({ count: tabSwitchCount })
+                        }).catch(() => {});
+                    })();
+                    
+                    showWarning(`Tab switch detected! Count: ${tabSwitchCount}`);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

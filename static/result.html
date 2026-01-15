@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Result</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .logos { display: flex; justify-content: space-between; width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .logo { height: 60px; width: auto; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .container { background: white; padding: 50px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; max-width: 500px; }
+        h1 { color: #333; margin-bottom: 30px; }
+        .score-display { font-size: 48px; font-weight: bold; color: #667eea; margin: 30px 0; }
+        .percentage { font-size: 24px; color: #666; margin-bottom: 20px; }
+        .message { font-size: 18px; color: #555; margin-bottom: 30px; }
+        button { padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <div class="logos">
+        <img src="logos/club logo.png" alt="Club Logo" class="logo">
+        <img src="logos/clg logo (1).png" alt="College Logo" class="logo">
+    </div>
+    <div class="container">
+        <h1>Exam Completed!</h1>
+        <div class="score-display" id="score"></div>
+        <div class="percentage" id="percentage"></div>
+        <div class="message" id="message"></div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        const result = JSON.parse(localStorage.getItem('examResult'));
+        
+        if (!result) {
+            window.location.href = 'login.html';
+        } else {
+            const percentage = ((result.score / result.total) * 100).toFixed(2);
+            
+            document.getElementById('score').textContent = `${result.score} / ${result.total}`;
+            document.getElementById('percentage').textContent = `${percentage}%`;
+            
+            let message = '';
+            if (percentage >= 80) {
+                message = '🎉 Excellent! Outstanding performance!';
+            } else if (percentage >= 60) {
+                message = '👍 Good job! Well done!';
+            } else if (percentage >= 40) {
+                message = '👌 Fair attempt. Keep learning!';
+            } else {
+                message = '📚 Keep practicing. You can do better!';
+            }
+            
+            document.getElementById('message').textContent = message;
+            localStorage.removeItem('examResult');
+        }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
