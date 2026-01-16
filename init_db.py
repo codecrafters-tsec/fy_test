@@ -77,6 +77,15 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
     
+    # Active exams table
+    c.execute('''CREATE TABLE IF NOT EXISTS active_exams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE NOT NULL,
+        question_ids TEXT NOT NULL,
+        started_at TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )''')
+    
     # Insert default admin
     try:
         c.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)',

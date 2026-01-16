@@ -141,19 +141,34 @@ def start_exam():
             if user['attempted'] == 1:
                 return jsonify({'success': False, 'message': 'Already attempted'}), 403
             
-            # Get exam settings
-            settings = conn.execute('SELECT * FROM exam_settings WHERE id = 1').fetchone()
+            # Check if exam already started
+            existing = conn.execute('SELECT question_ids FROM active_exams WHERE user_id = ?',
+                                    (session['user_id'],)).fetchone()
             
-            # Get random questions
-            all_questions = conn.execute('SELECT * FROM questions').fetchall()
-            
-            if len(all_questions) < settings['questions_per_exam']:
-                return jsonify({'success': False, 'message': 'Not enough questions in database'}), 400
-            
-            selected_questions = random.sample(list(all_questions), settings['questions_per_exam'])
+            if existing:
+                # Resume existing exam
+                question_ids = existing['question_ids'].split(',')
+                questions_data = conn.execute(f'SELECT * FROM questions WHERE id IN ({existing["question_ids"]})').fetchall()
+            else:
+                # Get exam settings
+                settings = conn.execute('SELECT * FROM exam_settings WHERE id = 1').fetchone()
+                
+                # Get random questions
+                all_questions = conn.execute('SELECT * FROM questions').fetchall()
+                
+                if len(all_questions) < settings['questions_per_exam']:
+                    return jsonify({'success': False, 'message': 'Not enough questions in database'}), 400
+                
+                selected_questions = random.sample(list(all_questions), settings['questions_per_exam'])
+                question_ids = [str(q['id']) for q in selected_questions]
+                
+                # Store in database
+                conn.execute('INSERT INTO active_exams (user_id, question_ids) VALUES (?, ?)',
+                             (session['user_id'], ','.join(question_ids)))
+                questions_data = selected_questions
             
             questions = []
-            for q in selected_questions:
+            for q in questions_data:
                 questions.append({
                     'id': q['id'],
                     'question': q['question'],
@@ -165,7 +180,7 @@ def start_exam():
                     }
                 })
             
-            session['exam_questions'] = [q['id'] for q in questions]
+            settings = conn.execute('SELECT * FROM exam_settings WHERE id = 1').fetchone()
             logger.info(f"User {session['user_id']} started exam")
             
             return jsonify({
@@ -182,15 +197,19 @@ def submit_exam():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Not logged in'}), 401
     
-    if 'exam_questions' not in session:
-        return jsonify({'success': False, 'message': 'Exam not started'}), 400
-    
     try:
         data = request.json
         answers = data.get('answers', {})
         
         with get_db() as conn:
-            # Double-check if already attempted (race condition protection)
+            # Get exam questions from database
+            active_exam = conn.execute('SELECT question_ids FROM active_exams WHERE user_id = ?',
+                                       (session['user_id'],)).fetchone()
+            
+            if not active_exam:
+                return jsonify({'success': False, 'message': 'Exam not started'}), 400
+            
+            # Double-check if already attempted
             user = conn.execute('SELECT attempted FROM users WHERE id = ?', 
                                 (session['user_id'],)).fetchone()
             if user['attempted'] == 1:
@@ -198,16 +217,16 @@ def submit_exam():
             
             # Calculate score
             score = 0
-            question_ids = session['exam_questions']
+            question_ids = active_exam['question_ids'].split(',')
             
             for qid in question_ids:
                 question = conn.execute('SELECT correct_answer FROM questions WHERE id = ?', 
-                                        (qid,)).fetchone()
-                selected = answers.get(str(qid), '')
+                                        (int(qid),)).fetchone()
+                selected = answers.get(qid, '')
                 
                 # Save answer
                 conn.execute('INSERT INTO answers (user_id, question_id, selected_answer) VALUES (?, ?, ?)',
-                             (session['user_id'], qid, selected))
+                             (session['user_id'], int(qid), selected))
                 
                 if selected == question['correct_answer']:
                     score += 1
@@ -219,10 +238,10 @@ def submit_exam():
             # Mark as attempted
             conn.execute('UPDATE users SET attempted = 1 WHERE id = ?', (session['user_id'],))
             
-            logger.info(f"User {session['user_id']} submitted exam. Score: {score}/{len(question_ids)}")
+            # Delete active exam
+            conn.execute('DELETE FROM active_exams WHERE user_id = ?', (session['user_id'],))
             
-            # Clear session
-            session.pop('exam_questions', None)
+            logger.info(f"User {session['user_id']} submitted exam. Score: {score}/{len(question_ids)}")
             
             return jsonify({
                 'success': True,
