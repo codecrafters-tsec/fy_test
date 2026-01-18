@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .logos { display: flex; justify-content: space-between; width: 100%; max-width: 400px; margin-bottom: 20px; }
-        .logo { height: 60px; width: auto; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .logo { height: 60px; width: auto; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; }
@@ -17,6 +17,9 @@
         input:focus { outline: none; border-color: #667eea; }
         button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
         button:hover { background: #5568d3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .spinner { display: none; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .error { color: red; margin-top: 10px; text-align: center; }
     </style>
 </head>
@@ -36,7 +39,8 @@
                 <label>Password</label>
                 <input type="password" id="password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" id="loginBtn">Login</button>
+            <div class="spinner" id="spinner"></div>
             <div class="error" id="error"></div>
         </form>
     </div>
@@ -115,6 +119,14 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error');
+            const loginBtn = document.getElementById('loginBtn');
+            const spinner = document.getElementById('spinner');
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            spinner.style.display = 'block';
+            errorDiv.textContent = '';
 
             try {
                 const clientIP = await getClientIP();
@@ -136,6 +148,11 @@
                 }
             } catch (err) {
                 errorDiv.textContent = 'Connection error';
+            } finally {
+                // Reset button state
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+                spinner.style.display = 'none';
             }
         });
     </script>
