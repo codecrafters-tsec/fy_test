@@ -7,9 +7,11 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .logos { display: flex; justify-content: space-between; width: 100%; max-width: 500px; margin-bottom: 20px; }
-        .logo { height: 60px; width: auto; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .container { background: white; padding: 50px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; max-width: 500px; }
+        .logos { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 30px; }
+        .logo { height: 80px; width: auto; padding: 10px; border-radius: 15px; box-shadow: 0 8px 20px rgba(255,255,255,0.3); transition: transform 0.3s ease; }
+        .logo:first-child { height: 100px; padding: 5px; } /* Club logo bigger, less padding */
+        .logo:hover { transform: translateY(-5px); }
+        .container { background: rgba(255,255,255,0.95); padding: 50px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: center; max-width: 500px; backdrop-filter: blur(10px); }
         h1 { color: #333; margin-bottom: 30px; }
         .score-display { font-size: 48px; font-weight: bold; color: #667eea; margin: 30px 0; }
         .percentage { font-size: 24px; color: #666; margin-bottom: 20px; }

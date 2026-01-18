@@ -7,9 +7,11 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .logos { display: flex; justify-content: space-between; width: 100%; max-width: 400px; margin-bottom: 20px; }
-        .logo { height: 60px; width: auto; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .logos { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 30px; }
+        .logo { width: 80px; height: 80px; padding: 5px; border-radius: 15px; box-shadow: 0 8px 20px rgba(255,255,255,0.3); transition: transform 0.3s ease; object-fit: contain; }
+        .logo:first-child { padding: 0.2px; } /* Club logo less padding = bigger image */
+        .logo:hover { transform: translateY(-5px); }
+        .container { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 100%; max-width: 400px; backdrop-filter: blur(10px); }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; }
