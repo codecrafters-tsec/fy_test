@@ -353,6 +353,10 @@ def get_tab_switches():
 def get_sessions():
     try:
         with get_db() as conn:
+            # Auto-cleanup old sessions (older than 2 hours)
+            conn.execute('''UPDATE user_sessions SET is_active = 0, logout_time = datetime('now', 'localtime')
+                            WHERE is_active = 1 AND login_time < datetime('now', '-2 hours')''')
+            
             sessions = conn.execute('''SELECT u.username, s.ip_address, s.login_time, s.logout_time, s.is_active
                                        FROM user_sessions s
                                        JOIN users u ON s.user_id = u.id

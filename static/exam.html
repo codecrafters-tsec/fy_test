@@ -69,6 +69,8 @@
                 e.preventDefault();
                 e.returnValue = '';
             }
+            // Mark session as inactive when page unloads
+            navigator.sendBeacon('/api/logout', JSON.stringify({}));
         });
 
         async function loadExam() {
@@ -379,7 +381,11 @@
                 .then(d => { if (d.count) tabSwitchCount = d.count; })
                 .catch(() => {});
             
-            window.addEventListener('beforeunload', () => isPageUnloading = true);
+            window.addEventListener('beforeunload', () => {
+                isPageUnloading = true;
+                // Mark session as inactive
+                navigator.sendBeacon('/api/logout', JSON.stringify({}));
+            });
             
             document.addEventListener('visibilitychange', function() {
                 if (document.hidden && !isPageUnloading) {
