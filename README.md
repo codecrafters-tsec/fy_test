@@ -292,3 +292,21 @@ Free to use for educational purposes.
 - Password: `admin123`
 
 **⚠️ CHANGE THESE IMMEDIATELY AFTER FIRST LOGIN!**
+
+## 🐞 Issues & Support
+
+If you encounter any issues while using this system, please create an issue in this repository.
+
+### 📌 Before submitting an issue:
+- Make sure the server is running properly
+- Check if all devices are connected to the same network
+- Review the troubleshooting section in this README
+
+### 📝 When creating an issue, please include:
+- **Description** of the problem  
+- **Steps to reproduce** the issue  
+- **Expected vs actual behavior**  
+- **Screenshots** (if applicable)  
+- **Device/Browser details**  
+
+This helps us resolve problems faster and more efficiently 🙌
